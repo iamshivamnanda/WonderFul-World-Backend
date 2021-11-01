@@ -33,6 +33,7 @@ const getPlacesByUserId = async (req, res, next) => {
   let places;
   try{
     // places = Place.find({creator:userId}).exec();
+   let  userr = await User.findById(userId);
      places = await User.findById(userId).populate('places');
    }catch (err) {
      const error = new HttpError('Could not found places',500);
@@ -60,7 +61,6 @@ const createPlace = async (req, res, next) => {
   try {
     coordinates = await getCoordsForAddress(address);
   } catch (error) {
-    console.log("Coordinates err");
     return next(error);
   }
 
@@ -74,12 +74,12 @@ const createPlace = async (req, res, next) => {
     creator
   }) ;
 
-
+// console.log(createdPlace.toJSON());
 let user;
 try{
  user =  await  User.findById(creator);
 }catch (err) {
-  const error = new HttpError('createdplace falied',404);
+  const error = new HttpError('createdplace falied for user found',404);
   return next(error);
 }
 
@@ -90,18 +90,19 @@ if(!user){
 
 try{
   const sess = await mongoose.startSession();
- sess.startTransaction();
-  await  createdPlace.save({session:sess});
-  user.places.push(createdPlace);
-  await user.save({session:sess});
-  await sess.commitTransaction();
+    sess.startTransaction();
+    await createdPlace.save({ session: sess }); 
+    user.places.push(createdPlace); 
+    await user.save({ session: sess }); 
+    await sess.commitTransaction();
   
 }catch (err) {
+  console.log(err);
   const error = new HttpError('createdplace falieddddd',500);
   return next(error);
 }
 
-  DUMMY_PLACES.push(createdPlace); //unshift(createdPlace)
+  // DUMMY_PLACES.push(createdPlace); //unshift(createdPlace)
 
   res.status(201).json({ place: createdPlace });
 };

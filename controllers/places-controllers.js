@@ -6,6 +6,7 @@ const getCoordsForAddress = require('../util/location');
 const mongoose = require('mongoose');
 const Place = require('../models/place');
 const User = require('../models/user');
+const fs = require('fs');
 
 
 
@@ -55,7 +56,7 @@ const createPlace = async (req, res, next) => {
     return next(new HttpError('Invalid inputs passed, please check your data.', 422));
   }
 
-  const { title, description, address, creator } = req.body;
+  const { title, description, address } = req.body;
 
   let coordinates;
   try {
@@ -70,14 +71,16 @@ const createPlace = async (req, res, next) => {
     description,
     address,
     location:coordinates,
-    image:'https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg',
-    creator
+    image:req.file.path,
+    creator:req.userData.userId
   }) ;
 
 // console.log(createdPlace.toJSON());
 let user;
 try{
- user =  await  User.findById(creator);
+ user =  await  User.findById(req.userData.userId);
+//  console.log(user);
+
 }catch (err) {
   const error = new HttpError('createdplace falied for user found',404);
   return next(error);
@@ -97,8 +100,8 @@ try{
     await sess.commitTransaction();
   
 }catch (err) {
-  console.log(err);
-  const error = new HttpError('createdplace falieddddd',500);
+  // console.log(err);
+  const error = new HttpError('createdplace falieddddd in saveing',500);
   return next(error);
 }
 
@@ -124,6 +127,10 @@ const updatePlace =  async (req, res, next) => {
     return next(error);
   }
   
+  if(place.creator.toString() !== req.userData.userId){
+    const error = new HttpError('You are Not allowed to edit this place ',401);
+    return next(error);
+  }
  
   place.title = title;
   place.description = description;
@@ -143,6 +150,7 @@ const deletePlace = async (req, res, next) => {
   let place;
   try{
    place =  await Place.findById(placeId).populate('creator');
+    
    }catch (err) {
      const error = new HttpError('Deletation falied',500);
      return next(error);
@@ -152,6 +160,11 @@ const deletePlace = async (req, res, next) => {
     const error = new HttpError('Place not Found, falied',500);
     return next(error);
    }
+
+   if(place.creator.id !== req.userData.userId){
+    const error = new HttpError('You are Not allowed to Delete this place ',401);
+    return next(error);
+  }
 
    try{
      const sess = await mongoose.startSession();
@@ -164,7 +177,8 @@ const deletePlace = async (req, res, next) => {
      const error = new HttpError('Deletation falied',500);
      return next(error);
    }
-
+   fs.unlink(place.image, err =>{
+  });
   res.status(200).json({ message: 'Deleted place.' });
 };
 

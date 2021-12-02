@@ -1,9 +1,0 @@
-{
-    "env":{
-        "DB_USER":"shivam",
-        "DB_PASSWORD":"Q3SMre82jkOFKlK1",
-        "DB_NAME":"ww-prod",
-        "GOOGLE_API_KEY":"AIzaSyAXHOIBBmurgSKAIz5DyK1pq7sT4m68lEM",
-        "JWT_KEY":"supersecret_dont_share"
-    }
-}
